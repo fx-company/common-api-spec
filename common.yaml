@@ -1,0 +1,125 @@
+openapi: 3.0.3
+info:
+  title: FX API Spec - OpenAPI 3.0
+  description: |-
+    This is the Common API spec for FX company. Common objects like Request/Response templates, Error and Fix objects will live here.
+    
+  termsOfService: http://swagger.io/terms/
+  contact:
+    email: murtala.fx.company@gmail.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+externalDocs:
+  description: Find out more about Swagger
+  url: http://swagger.io
+servers:
+  - url: http://localhost:3000/v1
+tags:
+  - name: common
+    description: Common schema definitions
+components:
+  schemas:
+    DateRangeAndBase:
+      type: object
+      properties:
+        startDate:
+          type: string
+          format: date
+          description: The start date of your time frame.
+        endDate:
+          type: string
+          format: date
+          description: The end date of your time frame.
+        base:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: Returns the three-letter currency code of the base currency used for this request.
+    ResponseTemplate:
+      type: object
+      required:
+        - response
+      properties:
+        response:
+          type: object
+          required:
+            - success
+            - description
+            - code
+          properties:
+            success:
+              type: boolean
+            description:
+              type: string
+            code:
+              type: integer
+              minLength: 3
+              maxLength: 3
+    ErrorResponseTemplate:
+      allOf:
+        - $ref: '#/components/schemas/ResponseTemplate'
+        - $ref: '#/components/schemas/Errors'
+    Errors:
+      required:
+        - errors
+      properties:
+        # ERROR Return ALL errors (don't return them one by one).
+        errors:
+          description: A list of errors
+          type: array
+          minItems: 1
+          items:
+            required:
+              - code
+              - message
+            properties:
+              # ERROR Type the errors
+              code:
+                type: string
+                enum:
+                  - required
+                  - incorrect
+                  - unknown
+                  - unexpected
+                description: A (if possible) generic human and machine readable error code
+              # ERROR Help humans understand the error
+              message:
+                type: string
+                description: A human readable error message
+              # ERROR Indicate the source of error when possible for both humans and machines.
+              source:
+                title: ErrorSource
+                description: The source of the error
+                required:
+                  - location
+                  - name
+                properties:
+                  location:
+                    type: string
+                    enum:
+                      - path
+                      - query
+                      - body
+                      - header
+                  name:
+                    type: string
+                    description: The name of the property or parameter causing the error
+                  path:
+                    type: string
+                    description: |
+                      [JSON pointer](https://www.rfc-editor.org/rfc/rfc6901) (`#/path/to/property`) targeting the source of error 
+                      (only used when location is `body`), 
+                    example: "#/availability/start"
+              fix:
+                allOf:
+                  - $ref: '#/components/schemas/Fix'
+    Fix:
+      type: object
+      description: The fixes needed in order to send a successful request
+      properties:
+        values:
+          type: array
+          items:
+            type: string
